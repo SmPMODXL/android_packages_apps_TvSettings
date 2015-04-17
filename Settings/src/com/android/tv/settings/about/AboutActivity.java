@@ -29,6 +29,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.support.annotation.NonNull;
 import android.support.v17.leanback.app.GuidedStepFragment;
 import android.support.v17.leanback.widget.GuidanceStylist;
@@ -91,6 +92,13 @@ public class AboutActivity extends SettingsLayoutActivity {
     private static final String SETTINGS_ADS_ACTIVITY_PACKAGE = "com.google.android.gms";
     private static final String SETTINGS_ADS_ACTIVITY_ACTION =
             "com.google.android.gms.settings.ADS_PRIVACY";
+
+    /**
+     * Get the PureNexus version.
+     */
+    public static String getDisplayVersion() {
+        return SystemProperties.get("ro.purenexus.version");
+    }
 
     /**
      * Intent component to launch PlatLogo Easter egg.
@@ -249,6 +257,10 @@ public class AboutActivity extends SettingsLayoutActivity {
         header.add(new Layout.Status.Builder(res)
                 .title(R.string.about_serial)
                 .description(Build.SERIAL)
+                .build());
+        header.add(new Layout.Status.Builder(res)
+                .title(R.string.nexus_version)
+                .description(getDisplayVersion())
                 .build());
         header.add(new Layout.Action.Builder(res, KEY_BUILD)
                 .title(R.string.about_build)
