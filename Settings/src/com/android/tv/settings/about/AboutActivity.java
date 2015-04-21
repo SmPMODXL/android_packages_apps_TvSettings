@@ -101,6 +101,13 @@ public class AboutActivity extends SettingsLayoutActivity {
     }
 
     /**
+     * Get the build date.
+     */
+    public static String getBuildDate() {
+        return SystemProperties.get("ro.build.date");
+    }
+
+    /**
      * Intent component to launch PlatLogo Easter egg.
      */
     private static final ComponentName mPlatLogoActivity = new ComponentName("android",
@@ -265,6 +272,10 @@ public class AboutActivity extends SettingsLayoutActivity {
         header.add(new Layout.Action.Builder(res, KEY_BUILD)
                 .title(R.string.about_build)
                 .description(Build.DISPLAY)
+                .build());
+        header.add(new Layout.Status.Builder(res)
+                .title(getString(R.string.about_build_date))
+                .description(getBuildDate())
                 .build());
         return new Layout().breadcrumb(getString(R.string.header_category_device)).add(header);
     }

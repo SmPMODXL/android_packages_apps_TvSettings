@@ -17,4 +17,6 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Nexus version -->
     <string name="nexus_version">PureNexus version</string>
+    <!-- About screen, build date -->
+    <string name="about_build_date">Build date</string>
 </resources>
