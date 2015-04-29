@@ -25,6 +25,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.res.Resources;
+import android.net.NetworkUtils;
+import android.net.wifi.IWifiManager;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -93,6 +96,8 @@ public class DeveloperOptionsActivity extends SettingsLayoutActivity {
     private static final int ACTION_VERIFY_APPS_OFF = ACTION_DEBUGGING_BASE + 7;
     private static final int ACTION_WIFI_VERBOSE_ON = ACTION_DEBUGGING_BASE + 8;
     private static final int ACTION_WIFI_VERBOSE_OFF = ACTION_DEBUGGING_BASE + 9;
+    private static final int ACTION_ADB_OVER_NETWORK_ON = ACTION_DEBUGGING_BASE + 10;
+    private static final int ACTION_ADB_OVER_NETWORK_OFF = ACTION_DEBUGGING_BASE + 11;
 
     // Debug app
     private static final int ACTION_DEBUG_APP_BASE = 3 << 20;
@@ -263,10 +268,11 @@ public class DeveloperOptionsActivity extends SettingsLayoutActivity {
         final String onTitle = getString(R.string.action_on_description);
         final String offTitle = getString(R.string.action_off_description);
 
-        return new Layout.Header.Builder(res)
+        final Layout.Header header = new Layout.Header.Builder(res)
                 .title(R.string.system_debugging)
-                .build()
-                .add(new Layout.Header.Builder(res)
+                .build();
+
+                header.add(new Layout.Header.Builder(res)
                         .title(R.string.system_usb_debugging)
                         .detailedDescription(R.string.system_desc_usb_debugging)
                         .build()
@@ -274,17 +280,29 @@ public class DeveloperOptionsActivity extends SettingsLayoutActivity {
                                 .add(onTitle, null, ACTION_USB_DEBUGGING_ON)
                                 .add(offTitle, null, ACTION_USB_DEBUGGING_OFF)
                                 .select(getUsbDebuggingActionId())
-                                .build()))
-                .add(new Layout.Header.Builder(res)
+                                .build()));
+
+                if (getGlobalSettingBoolean(Settings.Global.ADB_ENABLED) == true) {
+                    header.add(new Layout.Header.Builder(res)
+                            .title(R.string.adb_over_network)
+                            .detailedDescription(R.string.adb_over_network_summary)
+                            .build()
+                            .setSelectionGroup(new Layout.SelectionGroup.Builder(2)
+                                    .add(onTitle, null, ACTION_ADB_OVER_NETWORK_ON)
+                                    .add(offTitle, null, ACTION_ADB_OVER_NETWORK_OFF)
+                                    .select(getAdbOverNetworkId())
+                                    .build()));
+                }
+                header.add(new Layout.Header.Builder(res)
                         .title(R.string.system_allow_mock_locations)
                         .build()
                         .setSelectionGroup(new Layout.SelectionGroup.Builder(2)
                                 .add(onTitle, null, ACTION_MOCK_LOCATIONS_ON)
                                 .add(offTitle, null, ACTION_MOCK_LOCATIONS_OFF)
                                 .select(getMockLocationsActionId())
-                                .build()))
-                .add(getDebugAppHeader())
-                .add(new Layout.Header.Builder(res)
+                                .build()));
+                header.add(getDebugAppHeader());
+                header.add(new Layout.Header.Builder(res)
                         .title(R.string.system_wait_for_debugger)
                         .detailedDescription(R.string.system_desc_wait_for_debugger)
                         .build()
@@ -292,8 +310,8 @@ public class DeveloperOptionsActivity extends SettingsLayoutActivity {
                                 .add(onTitle, null, ACTION_WAIT_FOR_DEBUGGER_ON)
                                 .add(offTitle, null, ACTION_WAIT_FOR_DEBUGGER_OFF)
                                 .select(getWaitForDebuggerActionId())
-                                .build()))
-                .add(new Layout.Header.Builder(res)
+                                .build()));
+                header.add(new Layout.Header.Builder(res)
                         .title(R.string.system_verify_apps_over_usb)
                         .detailedDescription(R.string.system_desc_verify_apps_over_usb)
                         .build()
@@ -301,8 +319,8 @@ public class DeveloperOptionsActivity extends SettingsLayoutActivity {
                                 .add(onTitle, null, ACTION_VERIFY_APPS_ON)
                                 .add(offTitle, null, ACTION_VERIFY_APPS_OFF)
                                 .select(getVerifyAppsActionId())
-                                .build()))
-                .add(new Layout.Header.Builder(res)
+                                .build()));
+                header.add(new Layout.Header.Builder(res)
                         .title(R.string.system_wifi_verbose_logging)
                         .detailedDescription(R.string.system_desc_wifi_verbose_logging)
                         .build()
@@ -311,6 +329,7 @@ public class DeveloperOptionsActivity extends SettingsLayoutActivity {
                                 .add(offTitle, null, ACTION_WIFI_VERBOSE_OFF)
                                 .select(getWifiVerboseActionId())
                                 .build()));
+        return header;
     }
 
     private Layout.Header getDebugAppHeader() {
@@ -640,12 +659,17 @@ public class DeveloperOptionsActivity extends SettingsLayoutActivity {
     }
 
     private void onDebuggingActionClicked(Layout.Action action) {
-        switch (action.getId()) {
+        final int id = action.getId();
+        switch (id) {
             case ACTION_USB_DEBUGGING_ON:
                 setUsbDebugging(true);
                 break;
             case ACTION_USB_DEBUGGING_OFF:
                 setUsbDebugging(false);
+                break;
+            case ACTION_ADB_OVER_NETWORK_ON:
+            case ACTION_ADB_OVER_NETWORK_OFF:
+                setAdbOverNetwork(id);
                 break;
             case ACTION_MOCK_LOCATIONS_ON:
                 setMockLocations(true);
@@ -1297,6 +1321,87 @@ public class DeveloperOptionsActivity extends SettingsLayoutActivity {
 
     private void setAllAnrs(boolean value) {
         setSecureSettingBoolean(Settings.Secure.ANR_SHOW_BACKGROUND, value);
+    }
+
+    /**
+     * Adb over TCP/IP.
+     */
+    private void updateAdbOverNetwork() {
+        int port = Settings.Secure.getInt(getContentResolver(), Settings.Secure.ADB_PORT,  0);
+
+        WifiInfo wifiInfo = null;
+
+        if (port > 0) {
+            IWifiManager wifiManager = IWifiManager.Stub.asInterface(
+                    ServiceManager.getService(Context.WIFI_SERVICE));
+            try {
+                wifiInfo = wifiManager.getConnectionInfo();
+            } catch (RemoteException e) {
+                Log.e(TAG, "wifiManager, getConnectionInfo()", e);
+            }
+        }
+
+        if (wifiInfo != null) {
+            String hostAddress = NetworkUtils.intToInetAddress(
+                    wifiInfo.getIpAddress()).getHostAddress();
+            String summary = getString(R.string.adb_over_network_info) +hostAddress + ":" + String.valueOf(port);
+            Log.i(TAG, "Adb Over Network is: " + summary);
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.adb_over_network)
+                    .setMessage(summary)
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // Just need to display the adb over tcp/ip connect info
+                        }
+                    })
+                    .show();
+        }
+    }
+
+    private void adbNetworkWarning() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.adb_over_network)
+                .setMessage(R.string.adb_over_network_warning)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // We are OK to enable adb over network, trigger it
+                        Settings.Secure.putInt(getContentResolver(),
+                                Settings.Secure.ADB_PORT, 5555);
+                        updateAdbOverNetwork();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Enabling adb over network canceled
+                    }
+                })
+                .show();
+    }
+
+    private int getAdbOverNetworkId() {
+		int value = Settings.Secure.getInt(getContentResolver(),
+                Settings.Secure.ADB_PORT,  0);
+        switch (value) {
+            case 5555:
+                return ACTION_ADB_OVER_NETWORK_ON;
+            case -1:
+            default:
+                return ACTION_ADB_OVER_NETWORK_OFF;
+        }
+    }
+
+    private void setAdbOverNetwork(int action) {
+        switch (action) {
+            case ACTION_ADB_OVER_NETWORK_ON:
+                adbNetworkWarning();
+                break;
+            case ACTION_ADB_OVER_NETWORK_OFF:
+                Settings.Secure.putInt(getContentResolver(), Settings.Secure.ADB_PORT, -1);
+                break;
+        }
     }
 
     private void tryReboot() {
