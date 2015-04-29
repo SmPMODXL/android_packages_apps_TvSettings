@@ -47,4 +47,11 @@
     <!-- Warning for Adb over Network -->
     <string name="adb_over_network_warning">WARNING: When ADB over network is enabled, your phone is open for intrusions on all connected networks!\n\nOnly use this feature when you are connected on trusted networks.\n\nDo you really want to enable this function?</string>
     <string name="adb_over_network_info">adb connect "</string>
+
+    <!-- Home settings -->
+    <string name="system_reset_default_home">Reset default home screen</string>
+    <string name="system_home_settings">Home settings</string>
+    <string name="reset_launcher_title">Reset default home screen</string>
+    <string name="reset_launcher_description">By resetting the default home screen, you will be able to choose an alternate home screen (i.e Trebuchet).\n\nWould you like to reset the default home screen?</string>
+    <string name="reset_launcher_tip">Press the home button to bring up the home screen selection dialog.</string>
 </resources>
