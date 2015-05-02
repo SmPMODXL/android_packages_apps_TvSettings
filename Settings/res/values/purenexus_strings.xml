@@ -32,4 +32,12 @@
     <string name="system_display">Display</string>
     <string name="system_display_overscan">Overscan</string>
     <string name="system_display_overscan_description">Calibrate the display to fit your screen size.</string>
+    <!-- Reboot menu -->
+    <!-- Button to reboot the device into recovery, within the Reboot Options dialog -->
+    <string name="reboot_recovery_button_label">Recovery</string>
+    <!-- Button to reboot the device into bootloader, within the Reboot Options dialog -->
+    <string name="reboot_bootloader_button_label">Bootloader</string>
+    <string name="reboot_bootloader_reason">bootloader</string>
+    <!-- Button to soft reboot the device, within the Reboot Options dialog -->
+    <string name="reboot_soft_button_label">Soft reboot</string>
 </resources>

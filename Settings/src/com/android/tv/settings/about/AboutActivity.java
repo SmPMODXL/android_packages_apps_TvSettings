@@ -16,9 +16,12 @@
 
 package com.android.tv.settings.about;
 
+import android.app.ActivityManagerNative;
 import android.app.Fragment;
+import android.app.IActivityManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -28,7 +31,9 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.os.RemoteException;
 import android.os.SELinux;
+import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.support.annotation.NonNull;
@@ -384,9 +389,24 @@ public class AboutActivity extends SettingsLayoutActivity {
         return null;  // No system image package found.
     }
 
-    public static class RebootConfirmFragment extends GuidedStepFragment {
+    private static void doSoftReboot() {
+        try {
+            final IActivityManager am =
+                  ActivityManagerNative.asInterface(ServiceManager.checkService("activity"));
+            if (am != null) {
+                am.restart();
+            }
+        } catch (RemoteException e) {
+            Log.e(TAG, "failure trying to perform soft reboot", e);
+        }
+    }
+
+    public class RebootConfirmFragment extends GuidedStepFragment {
 
         private static final int ACTION_RESTART = 1;
+        private static final int ACTION_REBOOT_SOFT = 2;
+        private static final int ACTION_REBOOT_RECOVERY = 3;
+        private static final int ACTION_REBOOT_BOOTLOADER = 4;
 
         @Override
         public void onViewCreated(View view, Bundle savedInstanceState) {
@@ -412,16 +432,34 @@ public class AboutActivity extends SettingsLayoutActivity {
                     .id(ACTION_RESTART)
                     .build());
             actions.add(new GuidedAction.Builder()
+                    .title(getString(R.string.reboot_soft_button_label))
+                    .id(ACTION_REBOOT_SOFT)
+                    .build());
+            actions.add(new GuidedAction.Builder()
+                    .title(getString(R.string.reboot_recovery_button_label))
+                    .id(ACTION_REBOOT_RECOVERY)
+                    .build());
+            actions.add(new GuidedAction.Builder()
+                    .title(getString(R.string.reboot_bootloader_button_label))
+                    .id(ACTION_REBOOT_BOOTLOADER)
+                    .build());
+            actions.add(new GuidedAction.Builder()
                     .title(getString(android.R.string.cancel))
                     .build());
         }
 
         @Override
         public void onGuidedActionClicked(GuidedAction action) {
+            PowerManager pm =
+                    (PowerManager) getActivity().getSystemService(Context.POWER_SERVICE);
             if (action.getId() == ACTION_RESTART) {
-                PowerManager pm =
-                        (PowerManager) getActivity().getSystemService(Context.POWER_SERVICE);
                 pm.reboot(null);
+            } else if (action.getId() == ACTION_REBOOT_SOFT)  {
+                doSoftReboot();
+            } else if (action.getId() == ACTION_REBOOT_RECOVERY)  {
+                pm.reboot(PowerManager.REBOOT_RECOVERY);
+            } else if (action.getId() == ACTION_REBOOT_BOOTLOADER)  {
+                pm.reboot(getString(R.string.reboot_bootloader_reason));
             } else {
                 getFragmentManager().popBackStack();
             }
