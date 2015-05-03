@@ -28,4 +28,8 @@
     <string name="selinux_status_disabled">Disabled</string>
     <string name="selinux_status_permissive">Permissive</string>
     <string name="selinux_status_enforcing">Enforcing</string>
+    <!-- Display settings -->
+    <string name="system_display">Display</string>
+    <string name="system_display_overscan">Overscan</string>
+    <string name="system_display_overscan_description">Calibrate the display to fit your screen size.</string>
 </resources>
