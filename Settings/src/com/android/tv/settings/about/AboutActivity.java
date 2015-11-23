@@ -287,23 +287,10 @@ public class AboutActivity extends SettingsLayoutActivity {
                 .title(R.string.about_preference)
                 .build();
 
-        header.add(new Layout.Action.Builder(res, systemIntent(SETTINGS_UPDATE_SYSTEM))
-                .title(R.string.about_system_update)
-                .build());
         header.add(mDeviceNameLayoutGetter);
         header.add(new Layout.Action.Builder(res, KEY_REBOOT)
                 .title(R.string.restart_button_label)
                 .build());
-        header.add(new Layout.Header.Builder(res)
-                .title(R.string.about_legal_info)
-                .build()
-                .add(new Layout.Action.Builder(res,
-                        systemIntent(SETTINGS_LEGAL_LICENSE_INTENT_ACTION))
-                        .title(R.string.about_legal_license)
-                        .build())
-                .add(new Layout.Action.Builder(res, systemIntent(SETTINGS_LEGAL_TERMS_OF_SERVICE))
-                        .title(R.string.about_terms_of_service)
-                        .build()));
 
         final Intent adsIntent = new Intent();
         adsIntent.setPackage(SETTINGS_ADS_ACTIVITY_PACKAGE);
