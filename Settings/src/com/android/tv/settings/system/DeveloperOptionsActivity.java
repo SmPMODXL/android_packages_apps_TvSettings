@@ -871,7 +871,7 @@ public class DeveloperOptionsActivity extends SettingsLayoutActivity {
         try {
             scale = Float.parseFloat(values[index]);
         } catch (NumberFormatException e) {
-            scale = 1.0f;
+            scale = 0.5f;
         }
         try {
             mWindowManager.setAnimationScale(which, scale);
