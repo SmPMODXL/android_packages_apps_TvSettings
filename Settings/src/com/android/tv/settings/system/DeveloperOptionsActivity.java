@@ -898,7 +898,7 @@ public class DeveloperOptionsActivity extends SettingsLayoutActivity {
             scale = 1.0f;
         }
         try {
-            mWindowManager.setAnimationScale(which, scale);
+            mWindowManager.setAnimationScale(which, 0.5f);
         } catch (RemoteException e) {
             if (DEBUG) {
                 Log.d(TAG, "setAnimationScaleOption", e);
@@ -926,7 +926,7 @@ public class DeveloperOptionsActivity extends SettingsLayoutActivity {
                 return i;
             }
         }
-        return 2;
+        return 1;
     }
 
     private int getAppProcessLimit() {
